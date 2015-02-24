@@ -12,18 +12,13 @@ Download
 Usage
 -----
 
-In order to implement sticky headers for an adapter, make your `RecyclerView.Adapter` implement `StickyRecyclerHeadersAdapter` and implement the necessary methods:
-
+In order to implement sticky headers for an adapter, make your `RecyclerView.Adapter` implement `StickyRecyclerHeadersAdapter` and implement the following methods:
 ```java
-  public long getHeaderId(int position);
-
-  public VH onCreateHeaderViewHolder(ViewGroup parent);
-
-  public void onBindHeaderViewHolder(VH holder, int position);
-
-  public int getItemCount();
+public long getHeaderId(int position);
+public VH onCreateHeaderViewHolder(ViewGroup parent);
+public void onBindHeaderViewHolder(VH holder, int position);
+public int getItemCount();
 ```
-
 Then, decorate the recycler with `StickyRecyclerHeadersDecoration`:
 ```java
 mRecyclerView = (RecyclerView) findViewById(R.id.recyclerview);
