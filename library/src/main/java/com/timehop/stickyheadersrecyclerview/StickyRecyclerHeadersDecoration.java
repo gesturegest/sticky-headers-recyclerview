@@ -29,29 +29,22 @@ public class StickyRecyclerHeadersDecoration extends RecyclerView.ItemDecoration
     this(adapter, new LinearLayoutOrientationProvider(), new DimensionCalculator());
   }
 
-  private StickyRecyclerHeadersDecoration(StickyRecyclerHeadersAdapter adapter,
-                                          OrientationProvider orientationProvider,
-                                          DimensionCalculator dimensionCalculator) {
+  private StickyRecyclerHeadersDecoration(StickyRecyclerHeadersAdapter adapter, OrientationProvider orientationProvider,
+      DimensionCalculator dimensionCalculator) {
     this(adapter, orientationProvider, dimensionCalculator, new HeaderRenderer(orientationProvider),
         new HeaderViewCache(adapter, orientationProvider));
   }
 
-  private StickyRecyclerHeadersDecoration(StickyRecyclerHeadersAdapter adapter,
-                                          OrientationProvider orientationProvider,
-                                          DimensionCalculator dimensionCalculator,
-                                          HeaderRenderer headerRenderer,
-                                          HeaderProvider headerProvider) {
+  private StickyRecyclerHeadersDecoration(StickyRecyclerHeadersAdapter adapter, OrientationProvider orientationProvider,
+      DimensionCalculator dimensionCalculator, HeaderRenderer headerRenderer, HeaderProvider headerProvider) {
     this(adapter, headerRenderer, orientationProvider, dimensionCalculator, headerProvider,
         new HeaderPositionCalculator(adapter, headerProvider, orientationProvider,
             dimensionCalculator));
   }
 
-  private StickyRecyclerHeadersDecoration(StickyRecyclerHeadersAdapter adapter,
-                                          HeaderRenderer headerRenderer,
-                                          OrientationProvider orientationProvider,
-                                          DimensionCalculator dimensionCalculator,
-                                          HeaderProvider headerProvider,
-                                          HeaderPositionCalculator headerPositionCalculator) {
+  private StickyRecyclerHeadersDecoration(StickyRecyclerHeadersAdapter adapter, HeaderRenderer headerRenderer,
+      OrientationProvider orientationProvider, DimensionCalculator dimensionCalculator, HeaderProvider headerProvider,
+      HeaderPositionCalculator headerPositionCalculator) {
     mAdapter = adapter;
     mHeaderProvider = headerProvider;
     mOrientationProvider = orientationProvider;
@@ -63,8 +56,11 @@ public class StickyRecyclerHeadersDecoration extends RecyclerView.ItemDecoration
   @Override
   public void getItemOffsets(Rect outRect, View view, RecyclerView parent, RecyclerView.State state) {
     super.getItemOffsets(outRect, view, parent, state);
-    int itemPosition = parent.getChildPosition(view);
-    if (mHeaderPositionCalculator.hasNewHeader(itemPosition)) {
+    int itemPosition = parent.getChildAdapterPosition(view);
+    if (itemPosition == RecyclerView.NO_POSITION) {
+        return;
+    }
+    if (mHeaderPositionCalculator.hasNewHeader(itemPosition, mOrientationProvider.isReverseLayout(parent))) {
       View header = getHeaderView(parent, itemPosition);
       setItemOffsetsForHeader(outRect, header, mOrientationProvider.getOrientation(parent));
     }
@@ -97,23 +93,19 @@ public class StickyRecyclerHeadersDecoration extends RecyclerView.ItemDecoration
 
     for (int i = 0; i < parent.getChildCount(); i++) {
       View itemView = parent.getChildAt(i);
-      int position = parent.getChildPosition(itemView);
-      if (hasStickyHeader(i, position) || mHeaderPositionCalculator.hasNewHeader(position)) {
+      int position = parent.getChildAdapterPosition(itemView);
+      if (position == RecyclerView.NO_POSITION) {
+          continue;
+      }
+
+      boolean hasStickyHeader = mHeaderPositionCalculator.hasStickyHeader(itemView, mOrientationProvider.getOrientation(parent), position);
+      if (hasStickyHeader || mHeaderPositionCalculator.hasNewHeader(position, mOrientationProvider.isReverseLayout(parent))) {
         View header = mHeaderProvider.getHeader(parent, position);
-        Rect headerOffset = mHeaderPositionCalculator.getHeaderBounds(parent, header,
-            itemView, hasStickyHeader(i, position));
+        Rect headerOffset = mHeaderPositionCalculator.getHeaderBounds(parent, header, itemView, hasStickyHeader);
         mRenderer.drawHeader(parent, canvas, header, headerOffset);
         mHeaderRects.put(position, headerOffset);
       }
     }
-  }
-
-  private boolean hasStickyHeader(int listChildPosition, int indexInList) {
-    if (listChildPosition > 0 || mAdapter.getHeaderId(indexInList) < 0) {
-      return false;
-    }
-
-    return true;
   }
 
   /**
